@@ -57,7 +57,7 @@ router.get('/meus-relatorios', proteger, async (req, res) => {
 });
 
 // Listar relatórios pendentes (para o gerente)
-router.get('/pendentes', proteger, autorizar('gerente'), async (req, res) => {
+router.get('/pendentes', proteger, autorizar('gerente', 'diretor'), async (req, res) => {
   try {
     const relatorios = await Relatorio.find({ status: 'pendente' }).populate('criadoPor', 'nome email');
     res.json(relatorios);
@@ -67,7 +67,7 @@ router.get('/pendentes', proteger, autorizar('gerente'), async (req, res) => {
 });
 
 // Validar ou rejeitar relatório
-  router.put('/validar/:id', proteger, autorizar('gerente'), async (req, res) => {
+  router.put('/validar/:id', proteger, autorizar('gerente', 'diretor'), async (req, res) => {
   try {
     const { status } = req.body;
 
@@ -91,6 +91,25 @@ router.get('/pendentes', proteger, autorizar('gerente'), async (req, res) => {
   }
 });
 
+// Listar relatórios validados
+router.get('/validados', proteger, autorizar('gerente', 'diretor'), async (req, res) => {
+  try {
+    const relatoriosValidados = await Relatorio.find({ status: 'validado' }).populate('criadoPor', 'nome email');
+    res.json(relatoriosValidados);
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao buscar relatórios validados.', erro: error.message });
+  }
+});
+
+// Listar relatórios rejeitados
+router.get('/rejeitados', proteger, autorizar('gerente', 'diretor'), async (req, res) => {
+  try {
+    const relatoriosRejeitados = await Relatorio.find({ status: 'rejeitado' }).populate('criadoPor', 'nome email');
+    res.json(relatoriosRejeitados);
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao buscar relatórios rejeitados.', erro: error.message });
+  }
+});
 
 
 module.exports = router;

@@ -7,7 +7,7 @@ const bcrypt = require('bcrypt');
 
 // Criar novo funcionário
 
-router.post('/', proteger, autorizar('gerente'), async (req, res) => {
+router.post('/', proteger, autorizar('gerente', 'diretor'), async (req, res) => {
   try {
     const { nome, email, senha, cargo } = req.body;
 
@@ -26,12 +26,12 @@ router.post('/', proteger, autorizar('gerente'), async (req, res) => {
   }
 });
 
-// Apenas GERENTE pode acessar essas rotas
-router.get('/', proteger, autorizar('gerente'), async (req, res) => {
+// Apenas GERENTE e DIRETOR pode acessar essas rotas
+router.get('/', proteger, autorizar('gerente', 'diretor'), async (req, res) => {
 });
 
 // Listar todos os funcionários
-router.get('/', proteger, autorizar('gerente'), async (req, res) => {
+router.get('/', proteger, autorizar('gerente', 'diretor'), async (req, res) => {
   try {
     const usuarios = await User.find().select('-senhaHash');
     res.json({ funcionarios: usuarios });
@@ -41,8 +41,9 @@ router.get('/', proteger, autorizar('gerente'), async (req, res) => {
 });
 
 // Buscar funcionário por ID
-router.get('/:id', proteger, autorizar('gerente'), async (req, res) => {
+router.get('/:id', proteger, autorizar('gerente', 'diretor'), async (req, res) => {
   try {
+
     const usuario = await User.findById(req.params.id).select('-senhaHash');
     if (!usuario) {
       return res.status(404).json({ mensagem: 'Funcionário não encontrado.' });
@@ -54,7 +55,7 @@ router.get('/:id', proteger, autorizar('gerente'), async (req, res) => {
 });
 
 // Atualizar funcionário
-router.put('/:id', proteger, autorizar('gerente'), async (req, res) => {    
+router.put('/:id', proteger, autorizar('gerente', 'diretor'), async (req, res) => {    
   try {
     const { nome, email, cargo, senha } = req.body;
     const atualizacao = { nome, email, cargo };
@@ -78,7 +79,7 @@ router.put('/:id', proteger, autorizar('gerente'), async (req, res) => {
 });
 
 // Excluir funcionário
-router.delete('/:id', proteger, autorizar('gerente'), async (req, res) => {
+router.delete('/:id', proteger, autorizar('gerente', 'diretor'), async (req, res) => {
   try {
     const usuarioRemovido = await User.findByIdAndDelete(req.params.id);
     if (!usuarioRemovido) {
