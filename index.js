@@ -1,5 +1,6 @@
 
 require('dotenv').config();
+
 console.log('MONGO_URI:', process.env.MONGO_URI);  // Deve imprimir sua string de conexão
 
 const express = require('express');

@@ -4,6 +4,9 @@ const proteger = require('../middlewares/authMiddleware');
 const Relatorio = require('../models/Relatorio');
 const upload = require('../config/multer');
 const autorizar = require('../middlewares/autorizacaoMiddleware');
+const crypto = require('crypto');
+const { criptografarChavePrivada, descriptografarChavePrivada } = require('../utils/criptoChave');
+
 
 
 // Criar novo relatório com comprovante
@@ -110,6 +113,132 @@ router.get('/rejeitados', proteger, autorizar('gerente', 'diretor'), async (req,
     res.status(500).json({ mensagem: 'Erro ao buscar relatórios rejeitados.', erro: error.message });
   }
 });
+
+
+  // gera e salva chave pública e privada no MongoDB
+router.post('/gerar', proteger, autorizar('diretor'), async (req, res) => {
+  try {
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: { type: 'spki', format: 'pem' },
+      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    });
+
+    const senha = process.env.CHAVE_PRIVADA_SECRET;
+
+    // Criptografa antes de salvar
+    const privateKeyCriptografada = criptografarChavePrivada(privateKey, senha);
+
+    req.usuario.chavePublica = publicKey;
+    req.usuario.chavePrivadaCriptografada = privateKeyCriptografada;
+
+    await req.usuario.save();
+
+    res.json({ mensagem: 'Chaves geradas com sucesso!', publicKey });
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao gerar chaves.', erro: error.message });
+  }
+});
+
+
+
+  // busca relatório, assina com a chave privada do diretor
+router.post('/assinar/:id', proteger, autorizar('diretor'), async (req, res) => {
+  try {
+    const relatorio = await Relatorio.findById(req.params.id);
+
+    if (!relatorio || relatorio.status !== 'validado') {
+      return res.status(400).json({ mensagem: 'Relatório não está validado para assinatura.' });
+    }
+
+    const senha = process.env.CHAVE_PRIVADA_SECRET;
+
+    const privateKeyCriptografada = req.usuario.chavePrivadaCriptografada;
+    if (!privateKeyCriptografada) {
+      return res.status(400).json({ mensagem: 'Chave privada não encontrada.' });
+    }
+
+    const privateKey = descriptografarChavePrivada(privateKeyCriptografada, senha);
+
+    const dados = JSON.stringify({
+      id: relatorio._id.toString(),
+      titulo: relatorio.titulo,
+      valor: relatorio.valor,
+      criadoPor: relatorio.criadoPor.toString(),
+    });
+
+    const assinatura = crypto.sign(
+      'sha256',
+      Buffer.from(dados),
+      {
+        key: privateKey,
+        padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      }
+    );
+
+    relatorio.assinaturaDigital = assinatura.toString('base64');
+    relatorio.status = 'assinado';
+    await relatorio.save();
+
+    res.json({ mensagem: 'Relatório assinado com sucesso.', relatorio });
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao assinar relatório.', erro: error.message });
+  }
+});
+
+
+
+router.get('/verificar/:id', proteger, autorizar('diretor'), async (req, res) => {
+  try {
+    const relatorio = await Relatorio.findById(req.params.id).populate('criadoPor');
+
+    if (!relatorio || relatorio.status !== 'assinado' || !relatorio.assinaturaDigital) {
+      return res.status(400).json({ mensagem: 'Relatório não é válido para verificação.' });
+    }
+
+    const diretor = req.usuario;
+    const publicKey = diretor.chavePublica;
+
+    if (!publicKey) {
+      return res.status(400).json({ mensagem: 'Chave pública não encontrada.' });
+    }
+
+    const dados = JSON.stringify({
+      id: relatorio._id.toString(),
+      titulo: relatorio.titulo,
+      valor: relatorio.valor,
+      criadoPor: relatorio.criadoPor._id.toString(),
+    });
+
+    const isValido = crypto.verify(
+      "sha256",
+      Buffer.from(dados),
+      {
+        key: publicKey,
+        padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+      },
+      Buffer.from(relatorio.assinaturaDigital, 'base64')
+    );
+
+    res.json({ mensagem: isValido ? 'Assinatura válida.' : 'Assinatura inválida.', valido: isValido });
+
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao verificar assinatura.', erro: error.message });
+  }
+});
+
+// GET /relatorios/assinados
+router.get('/assinados', proteger, autorizar('diretor'), async (req, res) => {
+  try {
+    const relatoriosAssinados = await Relatorio.find({ status: 'assinado' }).populate('criadoPor', 'nome email');
+    res.json(relatoriosAssinados);
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao buscar relatórios assinados.', erro: error.message });
+  }
+});
+
+
+
 
 
 module.exports = router;
