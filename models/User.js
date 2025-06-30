@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   },
   cargo: {
     type: String,
-    enum: ['funcionario', 'gerente', 'diretor'],
+    enum: ['funcionario', 'gerente', 'diretor', 'teste', 'seguranca', 'desenvolvedor', 'analista'],
     required: true,
   },
   chavePublica: {

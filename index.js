@@ -7,16 +7,20 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const relatoriosRoutes = require('./routes/relatoriosRoutes');
 const cors = require('cors');
+const funcionariosRoutes = require('./routes/funcionariosRoutes');
+
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use('/uploads', express.static('uploads'));
+
 
 
 // Rotas
 app.use('/api/auth', authRoutes);
 app.use('/api/relatorios', relatoriosRoutes);
-
+app.use('/api/funcionarios', funcionariosRoutes);
 
 // Conexão com MongoDB
 mongoose.connect(process.env.MONGO_URI)

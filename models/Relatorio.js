@@ -8,6 +8,7 @@ const relatorioSchema = new mongoose.Schema({
   status: { type: String, enum: ['pendente', 'validado', 'assinado'], default: 'pendente' },
   criadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   assinaturaDigital: { type: String, default: null }, // futuramente
+  comprovante: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Relatorio', relatorioSchema);
