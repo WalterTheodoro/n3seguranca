@@ -30,3 +30,5 @@ const proteger = async (req, res, next) => {
 };
 
 module.exports = proteger;
+
+

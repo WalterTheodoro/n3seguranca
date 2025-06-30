@@ -48,13 +48,13 @@ exports.login = async (req, res) => {
       return res.status(401).json({ mensagem: 'Credenciais inválidas.' });
     }
 
-    const token = gerarToken(usuario._id);
+    const token = gerarToken(usuario.id);
 
     res.status(200).json({
       mensagem: 'Login realizado com sucesso.',
       token,
       usuario: {
-        id: usuario._id,
+        id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
         cargo: usuario.cargo

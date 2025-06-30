@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const proteger = require('../middlewares/authMiddleware');
+const autorizar = require('../middlewares/autorizacaoMiddleware');
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 
 // Criar novo funcionário
-router.post('/', proteger, async (req, res) => {
+
+router.post('/', proteger, autorizar('gerente'), async (req, res) => {
   try {
     const { nome, email, senha, cargo } = req.body;
 
@@ -24,8 +26,12 @@ router.post('/', proteger, async (req, res) => {
   }
 });
 
+// Apenas GERENTE pode acessar essas rotas
+router.get('/', proteger, autorizar('gerente'), async (req, res) => {
+});
+
 // Listar todos os funcionários
-router.get('/', proteger, async (req, res) => {
+router.get('/', proteger, autorizar('gerente'), async (req, res) => {
   try {
     const usuarios = await User.find().select('-senhaHash');
     res.json({ funcionarios: usuarios });
@@ -35,7 +41,7 @@ router.get('/', proteger, async (req, res) => {
 });
 
 // Buscar funcionário por ID
-router.get('/:id', proteger, async (req, res) => {
+router.get('/:id', proteger, autorizar('gerente'), async (req, res) => {
   try {
     const usuario = await User.findById(req.params.id).select('-senhaHash');
     if (!usuario) {
@@ -48,7 +54,7 @@ router.get('/:id', proteger, async (req, res) => {
 });
 
 // Atualizar funcionário
-router.put('/:id', proteger, async (req, res) => {
+router.put('/:id', proteger, autorizar('gerente'), async (req, res) => {    
   try {
     const { nome, email, cargo, senha } = req.body;
     const atualizacao = { nome, email, cargo };
@@ -72,7 +78,7 @@ router.put('/:id', proteger, async (req, res) => {
 });
 
 // Excluir funcionário
-router.delete('/:id', proteger, async (req, res) => {
+router.delete('/:id', proteger, autorizar('gerente'), async (req, res) => {
   try {
     const usuarioRemovido = await User.findByIdAndDelete(req.params.id);
     if (!usuarioRemovido) {

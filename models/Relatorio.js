@@ -5,7 +5,7 @@ const relatorioSchema = new mongoose.Schema({
   descricao: { type: String, required: true },
   valor: { type: Number, required: true },
   data: { type: Date, default: Date.now },
-  status: { type: String, enum: ['pendente', 'validado', 'assinado'], default: 'pendente' },
+  status: { type: String, enum: ['pendente', 'validado', 'assinado','rejeitado'], default: 'pendente' },
   criadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   assinaturaDigital: { type: String, default: null }, // futuramente
   comprovante: { type: String, default: null },
