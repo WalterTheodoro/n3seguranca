@@ -6,9 +6,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const relatoriosRoutes = require('./routes/relatoriosRoutes');
+const cors = require('cors');
 
 const app = express();
 app.use(express.json());
+app.use(cors());
+
 
 // Rotas
 app.use('/api/auth', authRoutes);
