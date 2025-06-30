@@ -7,9 +7,12 @@ const autorizar = require('../middlewares/autorizacaoMiddleware');
 
 
 // Criar novo relatório com comprovante
-router.post('/', proteger, autorizar('funcionario', 'gerente', 'diretor'), async (req, res) => {
-  try {
-    const { titulo, descricao, valor } = req.body;
+router.post('/', proteger, autorizar('funcionario', 'gerente', 'diretor'), upload.single('comprovante'), async (req, res) => {
+
+   try {
+
+  const { titulo, descricao, valor } = req.body;
+  console.log(titulo, descricao, valor); // deve imprimir os valores corretamente
 
     if (!titulo || !descricao || !valor) {
       return res.status(400).json({ mensagem: 'Preencha todos os campos obrigatórios.' });
