@@ -5,7 +5,8 @@ const Relatorio = require('../models/Relatorio');
 const upload = require('../config/multer');
 const autorizar = require('../middlewares/autorizacaoMiddleware');
 const crypto = require('crypto');
-const { criptografarChavePrivada, descriptografarChavePrivada } = require('../util/criptoChave');
+const { criptografarChavePrivada, descriptografarChavePrivada } = require('../utils/criptoChave');
+
 
 
 
