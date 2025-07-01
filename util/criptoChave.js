@@ -1,37 +1,27 @@
 const crypto = require('crypto');
 
-const ALGORITHM = 'aes-256-cbc'; // padrão seguro
+const chaveCriptografia = process.env.KEY_CRIPTO || 'segredo-padrao';
 
-// Cria uma chave de 32 bytes a partir da senha usando scrypt
-const gerarChave = (senha) => {
-  return crypto.scryptSync(senha, 'salt', 32);
-};
-
-function criptografarChavePrivada(chavePrivada, senha) {
-  const iv = crypto.randomBytes(16); // vetor de inicialização único para cada criptografia
-  const chave = gerarChave(senha);
-  const cipher = crypto.createCipheriv(ALGORITHM, chave, iv);
-
-  let encrypted = cipher.update(chavePrivada, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-
-  // Retorna iv + texto criptografado para descriptografar depois
-  return iv.toString('hex') + ':' + encrypted;
+function criptografar(texto) {
+  const iv = crypto.randomBytes(16);
+  const chave = crypto.scryptSync(chaveCriptografia, 'salt', 32);
+  const cipher = crypto.createCipheriv('aes-256-cbc', chave, iv);
+  let criptografado = cipher.update(texto, 'utf8', 'hex');
+  criptografado += cipher.final('hex');
+  return iv.toString('hex') + ':' + criptografado;
 }
 
-function descriptografarChavePrivada(chaveCriptografada, senha) {
-  const [ivHex, encrypted] = chaveCriptografada.split(':');
+function descriptografar(textoCriptografado) {
+  const [ivHex, conteudo] = textoCriptografado.split(':');
   const iv = Buffer.from(ivHex, 'hex');
-  const chave = gerarChave(senha);
-  const decipher = crypto.createDecipheriv(ALGORITHM, chave, iv);
-
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-
-  return decrypted;
+  const chave = crypto.scryptSync(chaveCriptografia, 'salt', 32);
+  const decipher = crypto.createDecipheriv('aes-256-cbc', chave, iv);
+  let descriptografado = decipher.update(conteudo, 'hex', 'utf8');
+  descriptografado += decipher.final('utf8');
+  return descriptografado;
 }
 
 module.exports = {
-  criptografarChavePrivada,
-  descriptografarChavePrivada
+  criptografar,
+  descriptografar
 };
